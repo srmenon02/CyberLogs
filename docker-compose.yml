@@ -1,0 +1,30 @@
+services:
+  kafka:
+    environment:
+    - KAFKA_CFG_PROCESS_ROLES=broker,controller
+    - KAFKA_CFG_NODE_ID=1
+    - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+    - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:50849
+    - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+    - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@host.docker.internal:9093
+    - ALLOW_PLAINTEXT_LISTENER=yes
+    image: bitnami/kafka:latest
+    ports:
+    - 50849:9092
+    - 9093:9093
+  mongodb:
+    image: mongo:latest 
+    ports:
+    - 27017:27017
+    volumes:
+    - mongo-data:/data/db
+  zookeeper:
+    environment:
+    - ALLOW_ANONYMOUS_LOGIN=yes
+    image: bitnami/zookeeper:latest
+    ports:
+    - 2181:2181
+version: '3.8'
+volumes:
+  mongo-data: null

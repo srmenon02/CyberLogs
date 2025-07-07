@@ -2,11 +2,12 @@ import json
 import random
 import time
 from datetime import datetime
+from datetime import timezone
 from kafka import KafkaProducer
 
 try:
     producer = KafkaProducer(
-        bootstrap_servers='localhost:9092',  # or 'localhost:9092' depending on your OS
+        bootstrap_servers='localhost:50849',  # or 'localhost:9092' depending on your OS
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
     print("Kafka producer connected.")
@@ -23,7 +24,6 @@ try:
     producer.send(topic, test_message)
     producer.flush()
     print("✅ Message sent successfully.")
-    producer.close()
 except Exception as e:
     print("❌ Failed to send message:", e)
 
@@ -41,7 +41,7 @@ events = [
 
 def generate_log():
     return {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "level": random.choices(log_levels, weights=[50, 30, 15, 5])[0],
         "event": random.choice(events),
         "host": f"server-{random.randint(1,3)}",
@@ -51,7 +51,6 @@ def generate_log():
 if __name__ == "__main__":
     topic = "syslogs"
     print(f"Sending logs to Kafka topic: {topic}")
-    
     try:
         while True:
             log = generate_log()
@@ -60,3 +59,5 @@ if __name__ == "__main__":
             time.sleep(random.uniform(0.5, 2.0))
     except KeyboardInterrupt:
         print("Stopped log simulation.")
+    finally:
+        producer.close()
