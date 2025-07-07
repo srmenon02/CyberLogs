@@ -49,11 +49,12 @@ def generate_log():
     }
 
 if __name__ == "__main__":
-    topic = "syslogs"
+    topic = "test-logs"
     print(f"Sending logs to Kafka topic: {topic}")
     try:
         while True:
             log = generate_log()
+            time.sleep(0.1)
             producer.send(topic, log)
             print("Sent:", log)
             time.sleep(random.uniform(0.5, 2.0))
