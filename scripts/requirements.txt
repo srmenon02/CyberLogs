@@ -3,8 +3,9 @@ uvicorn[standard]==0.22.0
 kafka-python==2.0.2
 pydantic==1.10.7
 pyyaml==6.0.1
+pymongo==4.5.0
 motor==3.1.1                # Async MongoDB driver
 scikit-learn                # ML for anomaly detection
-numpy==1.25.2               # Dependency for ML
+numpy                       # Dependency for ML
 python-dotenv==1.0.0        # For environment variable loading
 pytest==7.4.0               # For backend testing
