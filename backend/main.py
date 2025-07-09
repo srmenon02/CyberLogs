@@ -1,29 +1,54 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi import Query
+from motor.motor_asyncio import AsyncIOMotorClient
+from kafka import KafkaConsumer
 import asyncio
 import json
-from fastapi import FastAPI
-from kafka import KafkaConsumer
-from motor.motor_asyncio import AsyncIOMotorClient
 
-# MongoDB and Kafka config
+# Configs
 MONGODB_URI = "mongodb://localhost:27017"
 DATABASE_NAME = "cryptosecure"
 COLLECTION_NAME = "logs"
 KAFKA_TOPIC = "test-logs"
 KAFKA_BOOTSTRAP_SERVERS = "localhost:50849"
 
-# Initialize MongoDB client and collection once for reuse
+# MongoDB
 client = AsyncIOMotorClient(MONGODB_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
-
-from fastapi.responses import JSONResponse
-from fastapi import Query
-
+# FastAPI app
 app = FastAPI()
 
-consumer_task = None  # Will hold the asyncio Task for the Kafka consumer
+# ✅ CORS Middleware must be added before routes or startup events
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+@app.get("/logs")
+async def get_logs(limit: int = 10):
+    print(f"Fetching latest {limit} logs from MongoDB")
+    cursor = collection.find().sort("_id", -1).limit(limit)
+    logs = []
+    async for log in cursor:
+        log["_id"] = str(log["_id"])
+        logs.append(log)
+    print(f"Returning {len(logs)} logs")
+    return logs
+
+
+# Kafka consumer background task and control
+consumer_task = None
 
 def get_kafka_consumer():
     return KafkaConsumer(
@@ -35,7 +60,6 @@ def get_kafka_consumer():
         value_deserializer=lambda v: json.loads(v.decode('utf-8'))
     )
 
-
 async def save_log(log):
     try:
         result = await collection.insert_one(log)
@@ -43,55 +67,43 @@ async def save_log(log):
     except Exception as e:
         print(f"Error saving log to MongoDB: {e}")
 
-
 async def consume_and_store():
     consumer = get_kafka_consumer()
     print("✅ Kafka consumer connected. Listening for messages...")
-
+    loop = asyncio.get_event_loop()
     try:
-        for message in consumer:
-            log_data = message.value
-            print(f"📥 Received: {log_data}")
-            await save_log(log_data)  # <-- await here to ensure save happens
+        while True:
+            # Poll with timeout to allow task cancellation
+            msg_pack = consumer.poll(timeout_ms=1000)
+            if not msg_pack:
+                await asyncio.sleep(0)  # Yield to event loop
+                continue
+            for tp, messages in msg_pack.items():
+                for message in messages:
+                    log_data = message.value
+                    print(f"📥 Received: {log_data}")
+                    loop.create_task(save_log(log_data))
+    except asyncio.CancelledError:
+        print("Kafka consumer task cancelled via asyncio.")
     except Exception as e:
-        print(f"Kafka consumer error: {e}")
+        print(f"Kafka error: {e}")
     finally:
         consumer.close()
-        client.close()
-        print("Kafka consumer stopped.")
-
-
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
-
-# HTTP endpoint to get latest logs
-@app.get("/logs")
-async def get_logs(limit: int = Query(10, ge=1, le=100)):
-    """Return the latest logs from MongoDB, most recent first."""
-    cursor = collection.find().sort("_id", -1).limit(limit)
-    logs = []
-    async for log in cursor:
-        log["_id"] = str(log["_id"])
-        logs.append(log)
-    return JSONResponse(content=logs)
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to CryptoSecure Insights API"}
-
+        print("Kafka consumer closed.")
 
 @app.on_event("startup")
 async def startup_event():
     global consumer_task
-    # Start Kafka consumer as background task
-    consumer_task = asyncio.create_task(consume_and_store())
-
+    # Uncomment this line to start Kafka consumer on app startup
+    # consumer_task = asyncio.create_task(consume_and_store())
 
 @app.on_event("shutdown")
 async def shutdown_event():
     global consumer_task
     if consumer_task:
         consumer_task.cancel()
-        print("Kafka consumer task cancelled.")
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            pass
+        print("Kafka consumer task cancelled gracefully.")

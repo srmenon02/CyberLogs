@@ -44,11 +44,11 @@ def consume_sync(loop):
         # Schedule async save_log on the event loop thread-safe way
         asyncio.run_coroutine_threadsafe(save_log(log_data), loop)
 
-@app.on_event("startup")
-def startup_event():
-    loop = asyncio.get_event_loop()
-    thread = Thread(target=consume_sync, args=(loop,), daemon=True)
-    thread.start()
+# @app.on_event("startup")
+# def startup_event():
+#     loop = asyncio.get_event_loop()
+#     thread = Thread(target=consume_sync, args=(loop,), daemon=True)
+#     thread.start()
 
 @app.on_event("shutdown")
 def shutdown_event():
