@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi import Query
 from motor.motor_asyncio import AsyncIOMotorClient
 from kafka import KafkaConsumer
+from typing import Optional
+from datetime import datetime
+from bson import ObjectId
+from pydantic import BaseModel, validator
 import asyncio
 import json
 
@@ -35,16 +40,72 @@ app.add_middleware(
 async def health():
     return {"status": "ok"}
 
+def validate_iso_datetime(value: Optional[str], field_name: str) -> Optional[datetime]:
+    if value is None:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid ISO datetime format for '{field_name}'. "
+                   f"Expected format like '2025-07-11T12:00:00'.",
+        )
 @app.get("/logs")
-async def get_logs(limit: int = 10):
-    print(f"Fetching latest {limit} logs from MongoDB")
-    cursor = collection.find().sort("_id", -1).limit(limit)
+async def get_logs(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    level: Optional[str] = Query(None),
+    start_time: Optional[str] = Query(None),
+    end_time: Optional[str] = Query(None),
+    sort_by: str = Query("timestamp"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    event_keyword: Optional[str] = Query(None, description="Substring to match in event field"),
+    host: Optional[str] = Query(None, description="Filter logs by exact host name"),
+):
+    start_dt = validate_iso_datetime(start_time, "start_time")
+    end_dt = validate_iso_datetime(end_time, "end_time")
+
+    query: dict = {}
+    if level:
+        query["level"] = level
+    if host:
+        query["host"] = host
+    if event_keyword:
+        query["event"] = {"$regex": event_keyword, "$options": "i"}
+    if start_dt or end_dt:
+        time_filter: dict = {}
+        if start_dt:
+            time_filter["$gte"] = start_dt
+        if end_dt:
+            time_filter["$lte"] = end_dt
+        query["timestamp"] = time_filter
+
+    # Validate sorting
+    allowed_sort_fields = {"timestamp", "level", "_id"}
+    if sort_by not in allowed_sort_fields:
+        raise HTTPException(status_code=400, detail=f"Invalid sort_by field. Choose from {allowed_sort_fields}")
+    sort_direction = 1 if sort_order == "asc" else -1
+
+    total_count = await collection.count_documents(query)
+    skip = (page - 1) * page_size
+    cursor = collection.find(query).sort(sort_by, sort_direction).skip(skip).limit(page_size)
+
     logs = []
     async for log in cursor:
         log["_id"] = str(log["_id"])
         logs.append(log)
-    print(f"Returning {len(logs)} logs")
-    return logs
+
+    return {
+        "total_count": total_count,
+        "page": page,
+        "page_size": page_size,
+        "logs": logs,
+    }
+
+
+
+
 
 
 # Kafka consumer background task and control
@@ -95,7 +156,7 @@ async def consume_and_store():
 async def startup_event():
     global consumer_task
     # Uncomment this line to start Kafka consumer on app startup
-    # consumer_task = asyncio.create_task(consume_and_store())
+    consumer_task = asyncio.create_task(consume_and_store())
 
 @app.on_event("shutdown")
 async def shutdown_event():
