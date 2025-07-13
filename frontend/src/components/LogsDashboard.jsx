@@ -1,49 +1,221 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+
+function Spinner() {
+  return (
+    <div className="flex justify-center items-center py-20">
+      <div
+        className="w-10 h-10 border-4 border-gray-600 border-t-coral-400 rounded-full animate-spin"
+        style={{ borderTopColor: "transparent" }}
+      ></div>
+    </div>
+  );
+}
 
 export default function LogsDashboard() {
-  // State to hold logs, loading status, and errors
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetch('http://localhost:8000/logs?limit=10')  // ← optional: switch to page/page_size
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch logs');
-        }
-        return response.json();
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [cache, setCache] = useState({});
+  const [levelFilter, setLevelFilter] = useState("All");
+
+  const fetchLogs = (page, level = "All") => {
+    const cacheKey = `${level}_${page}`;
+    if (cache[cacheKey]) {
+      setLogs(cache[cacheKey].logs);
+      setTotalCount(cache[cacheKey].totalCount);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    let url = `http://localhost:8000/logs?page=${page}&page_size=${pageSize}`;
+    if (level !== "All") {
+      url += `&level=${level}`;
+    }
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch logs");
+        return res.json();
       })
-      .then(data => {
-        console.log('Fetched logs:', data);
-        setLogs(data.logs);  // ✅ Use the "logs" field from the response
+      .then((data) => {
+        setCache((prev) => ({
+          ...prev,
+          [cacheKey]: { logs: data.logs, totalCount: data.total_count },
+        }));
+        setLogs(data.logs);
+        setTotalCount(data.total_count);
         setLoading(false);
+
+        // Prefetch next page with same level filter
+        const totalPages = Math.ceil(data.total_count / pageSize);
+        if (page < totalPages) {
+          const nextCacheKey = `${level}_${page + 1}`;
+          fetch(
+            `http://localhost:8000/logs?page=${page + 1}&page_size=${pageSize}${
+              level !== "All" ? `&level=${level}` : ""
+            }`
+          )
+            .then((res) => res.json())
+            .then((nextData) => {
+              setCache((prev) => ({
+                ...prev,
+                [nextCacheKey]: {
+                  logs: nextData.logs,
+                  totalCount: nextData.total_count,
+                },
+              }));
+            })
+            .catch(() => {});
+        }
       })
-      .catch(err => {
-        console.error('Fetch error:', err); // ADD THIS
+      .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  };
 
+  useEffect(() => {
+    fetchLogs(page, levelFilter);
+  }, [page, levelFilter]);
 
-  // Display loading message
-  if (loading) return <p>Loading logs...</p>;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Display error message
   if (error) return <p className="text-red-600">Error: {error}</p>;
 
-  // Render logs list
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Latest Logs</h1>
-      <ul className="space-y-2">
-        {logs.map(log => (
-          <li key={log._id} className="border p-2 rounded shadow-sm">
-            <pre>{JSON.stringify(log, null, 2)}</pre>
-          </li>
-        ))}
-      </ul>
+    <div className="min-h-screen bg-charcoal-900 p-8 text-gray-100 font-sans">
+      <main className="max-w-6xl mx-auto bg-charcoal-800 rounded-3xl shadow-xl p-10">
+        <header className="mb-10">
+          <h1
+            className="text-5xl font-extrabold tracking-tight mb-2"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            Latest Logs
+          </h1>
+          <div className="mb-6 flex items-center gap-4">
+            <label htmlFor="levelFilter" className="font-semibold text-gray-300">
+              Filter by Level:
+            </label>
+            <select
+              id="levelFilter"
+              value={levelFilter}
+              onChange={(e) => {
+                setPage(1); // Reset to first page when filter changes
+                setLevelFilter(e.target.value);
+              }}
+              className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400"
+            >
+              <option>All</option>
+              <option>INFO</option>
+              <option>WARNING</option>
+              <option>ERROR</option>
+            </select>
+          </div>
+        </header>
+
+        <ul className="space-y-8">
+          {logs.map((log) => (
+            <li
+              key={log._id || log.timestamp}
+              className="bg-charcoal-700 rounded-3xl shadow-lg p-8 transition-shadow hover:shadow-coral-600/50 border border-charcoal-600"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <time className="text-sm font-mono text-teal-300 tracking-wide">
+                  {new Date(log.timestamp).toLocaleString()}
+                </time>
+                <span
+                  className={`px-4 py-1 rounded-full text-sm font-semibold tracking-wide ${
+                    log.level === "ERROR"
+                      ? "bg-coral-600 text-coral-100"
+                      : log.level === "WARNING"
+                      ? "bg-yellow-500 text-yellow-100"
+                      : "bg-teal-600 text-teal-100"
+                  }`}
+                >
+                  {log.level}
+                </span>
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-100 mb-4 leading-snug">
+                {log.event}
+              </h2>
+              <div className="text-base text-gray-300 flex gap-8">
+                <div>
+                  <span className="font-semibold text-gray-200">Host:</span> {log.host}
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-200">IP:</span> {log.ip}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <nav className="mt-10 flex flex-col items-center gap-4">
+          <div className="flex justify-center items-center gap-6">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1 || loading}
+              className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+                page === 1 || loading
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-coral-600 hover:bg-coral-700"
+              }`}
+            >
+              Previous
+            </button>
+
+            <span className="text-gray-300 font-mono">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setPage((p) => (p < totalPages ? p + 1 : p))}
+              disabled={page === totalPages || loading}
+              className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+                page === totalPages || loading
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-coral-600 hover:bg-coral-700"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+
+          {loading && (
+            <div className="flex items-center gap-2 text-gray-300 text-sm font-mono select-none">
+              <svg
+                className="w-5 h-5 animate-spin text-coral-400"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              Loading page {page}…
+            </div>
+          )}
+        </nav>
+      </main>
     </div>
   );
 }
