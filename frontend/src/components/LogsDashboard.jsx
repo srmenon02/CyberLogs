@@ -7,8 +7,7 @@ export default function LogsDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch logs from backend API
-    fetch('http://localhost:8000/logs?limit=10')
+    fetch('http://localhost:8000/logs?limit=10')  // ← optional: switch to page/page_size
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch logs');
@@ -16,14 +15,17 @@ export default function LogsDashboard() {
         return response.json();
       })
       .then(data => {
-        setLogs(data);         // Store logs data in state
-        setLoading(false);     // Done loading
+        console.log('Fetched logs:', data);
+        setLogs(data.logs);  // ✅ Use the "logs" field from the response
+        setLoading(false);
       })
       .catch(err => {
-        setError(err.message); // Show error message if fetch fails
+        console.error('Fetch error:', err); // ADD THIS
+        setError(err.message);
         setLoading(false);
       });
-  }, []); // Empty deps array means this runs once on mount
+  }, []);
+
 
   // Display loading message
   if (loading) return <p>Loading logs...</p>;
