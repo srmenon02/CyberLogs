@@ -22,9 +22,10 @@ export default function LogsDashboard() {
 
   const [cache, setCache] = useState({});
   const [levelFilter, setLevelFilter] = useState("All");
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const fetchLogs = (page, level = "All") => {
-    const cacheKey = `${level}_${page}`;
+    const cacheKey = `${level}_${page}_${searchKeyword.trim()}`;
     if (cache[cacheKey]) {
       setLogs(cache[cacheKey].logs);
       setTotalCount(cache[cacheKey].totalCount);
@@ -39,6 +40,7 @@ export default function LogsDashboard() {
     if (level !== "All") {
       url += `&level=${level}`;
     }
+    if (searchKeyword.trim()) url += `&event_keyword=${encodeURIComponent(searchKeyword.trim())}`;
 
     fetch(url)
       .then((res) => {
@@ -83,8 +85,9 @@ export default function LogsDashboard() {
   };
 
   useEffect(() => {
-    fetchLogs(page, levelFilter);
-  }, [page, levelFilter]);
+  fetchLogs(page, levelFilter);
+  }, [page, levelFilter, searchKeyword]);
+
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -108,7 +111,7 @@ export default function LogsDashboard() {
               id="levelFilter"
               value={levelFilter}
               onChange={(e) => {
-                setPage(1); // Reset to first page when filter changes
+                setPage(1);
                 setLevelFilter(e.target.value);
               }}
               className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400"
@@ -118,8 +121,47 @@ export default function LogsDashboard() {
               <option>WARNING</option>
               <option>ERROR</option>
             </select>
+
+            {loading && (
+              <svg
+                className="w-5 h-5 animate-spin text-coral-400 ml-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+            )}
           </div>
-        </header>
+          <div className="flex items-center gap-4 mt-4">
+          <label htmlFor="searchKeyword" className="font-semibold text-gray-300">
+          Keyword Search:
+          </label>
+          <input
+            type="text"
+            id="searchKeyword"
+            value={searchKeyword}
+            onChange={(e) => {
+              setPage(1); // Reset to first page
+              setSearchKeyword(e.target.value);
+            }}
+            placeholder="e.g. access, reboot, disk..."
+            className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400 w-72"
+          />
+        </div>
+                  </header>
 
         <ul className="space-y-8">
           {logs.map((log) => (

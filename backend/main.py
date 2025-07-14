@@ -11,6 +11,11 @@ from bson import ObjectId
 from pydantic import BaseModel, validator
 import asyncio
 import json
+from fastapi.middleware.gzip import GZipMiddleware
+
+app = FastAPI()
+app.add_middleware(GZipMiddleware, minimum_size=1000)  # Only compress responses >1KB
+
 
 # Configs
 MONGODB_URI = "mongodb://localhost:27017"
@@ -89,7 +94,15 @@ async def get_logs(
 
     total_count = await collection.count_documents(query)
     skip = (page - 1) * page_size
-    cursor = collection.find(query).sort(sort_by, sort_direction).skip(skip).limit(page_size)
+    projection = {
+    "_id": 1,
+    "timestamp": 1,
+    "level": 1,
+    "event": 1,
+    "host": 1,
+    "ip": 1
+    }
+    cursor = collection.find(query, projection).sort(sort_by, sort_direction).skip(skip).limit(page_size)
 
     logs = []
     async for log in cursor:
