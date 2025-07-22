@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+
 function Spinner() {
   return (
     <div className="flex justify-center items-center py-20">
@@ -23,6 +24,7 @@ export default function LogsDashboard() {
   const [cache, setCache] = useState({});
   const [levelFilter, setLevelFilter] = useState("All");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // default newest first
 
   const fetchLogs = (page, level = "All") => {
     const cacheKey = `${level}_${page}_${searchKeyword.trim()}`;
@@ -36,7 +38,8 @@ export default function LogsDashboard() {
     setLoading(true);
     setError(null);
 
-    let url = `http://localhost:8000/logs?page=${page}&page_size=${pageSize}`;
+    let url = `http://localhost:8000/logs?page=${page}&page_size=${pageSize}&sort_by=timestamp&sort_order=${sortOrder}`;
+;
     if (level !== "All") {
       url += `&level=${level}`;
     }
@@ -114,6 +117,7 @@ export default function LogsDashboard() {
                 setPage(1);
                 setLevelFilter(e.target.value);
               }}
+              
               className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400"
             >
               <option>All</option>
@@ -121,7 +125,7 @@ export default function LogsDashboard() {
               <option>WARNING</option>
               <option>ERROR</option>
             </select>
-
+            
             {loading && (
               <svg
                 className="w-5 h-5 animate-spin text-coral-400 ml-2"
@@ -144,6 +148,31 @@ export default function LogsDashboard() {
                 ></path>
               </svg>
             )}
+
+          <label htmlFor="sortOrder" className="font-semibold text-gray-300">
+            Sort by Time:
+          </label>
+          <select
+            id="sortOrder"
+            value={sortOrder}
+            onChange={(e) => {
+              setPage(1);
+              setSortOrder(e.target.value);
+            }}
+            className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400"
+          >
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+          <button
+            disabled={loading}
+            onClick={() => {
+              window.open("http://localhost:8000/logs/export", "_blank");
+            }}
+            className="ml-auto bg-coral-600 hover:bg-coral-700 text-white font-semibold px-4 py-2 rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Download CSV
+          </button>
           </div>
           <div className="flex items-center gap-4 mt-4">
           <label htmlFor="searchKeyword" className="font-semibold text-gray-300">
