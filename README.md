@@ -1,4 +1,4 @@
-# CyberLogs
+# cyberlogs
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 > A real-time cybersecurity monitoring dashboard that utilizes Kafka log streams in conjunction with FastAPI Processing and React to visualize log activity in real time.
@@ -30,7 +30,7 @@ To get a local copy up and running follow these simple example steps.
 ### Environment Setup
 Clone Repo
   ```sh
-  git clone https://github.com/srmenon02/CyberLogs.git
+  git clone https://github.com/srmenon02/cyberlogs.git
   cd CyberLogs
   ```
 Set up Log Simulator, Kafka Consumer, React front end, and FastAPI
