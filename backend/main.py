@@ -4,6 +4,9 @@ from fastapi import Query, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi import Query
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.responses import StreamingResponse
+import pandas as pd
+import io
 from kafka import KafkaConsumer
 from typing import Optional
 from datetime import datetime
@@ -181,3 +184,28 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         print("Kafka consumer task cancelled gracefully.")
+
+@app.get("/logs/export")
+async def export_logs_as_csv():
+    # You can later apply filters here
+    logs_cursor = collection.find().sort("timestamp", -1)
+    logs = await logs_cursor.to_list(length=1000)  # Adjust the number as needed
+
+    if not logs:
+        raise HTTPException(status_code=404, detail="No logs found")
+
+    # Normalize MongoDB documents (remove _id or convert it)
+    for log in logs:
+        log["_id"] = str(log["_id"])
+
+    df = pd.DataFrame(logs)
+
+    stream = io.StringIO()
+    df.to_csv(stream, index=False)
+    stream.seek(0)
+
+    return StreamingResponse(
+        iter([stream.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=logs_export.csv"},
+    )
