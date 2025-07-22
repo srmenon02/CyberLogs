@@ -1,7 +1,7 @@
 # CyberLogs
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-> A real-time cybersecurity monitoring dashboard that utilizes Kafka log streams in cnjunction with FastAPI Processing and React to visualize log activity in real time.
+> A real-time cybersecurity monitoring dashboard that utilizes Kafka log streams in conjunction with FastAPI Processing and React to visualize log activity in real time.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
