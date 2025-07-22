@@ -3,10 +3,6 @@
 ## About The Project
 > A real-time cybersecurity monitoring dashboard that utilizes Kafka log streams in conjunction with FastAPI Processing and React to visualize log activity in real time.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 ### Built With:
 
 **Frontend**
@@ -24,9 +20,6 @@
 **Deployment:**
 
 - [Docker](https://www.docker.com/)
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -61,7 +54,6 @@ Frontend
   https://localhost:5173
   ```
 
-
 <!-- ROADMAP -->
 ## Roadmap
 
@@ -80,24 +72,16 @@ Frontend
 ## Contributing
 
 Any and all contributions are welcome! If you have any suggestions on making improvements, feel free to fork the repo and submit a PR.
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- LICENSE -->
 ## License
 
 Distributed under the project_license. See `LICENSE.txt` for more information.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- CONTACT -->
 ## Contact
 
-Suraj Menon - [@suraj-menon](www.linkedin.com/in/suraj-menon) - srmenon02@gmail.com
-
-Project Link: [https://github.com/srmenon02/CyberLogs.git]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+Suraj Menon 
+-  Linkedin: www.linkedin.com/in/suraj-menon
+-  Email:  srmenon02@gmail.com
 
