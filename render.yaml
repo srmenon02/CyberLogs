@@ -1,8 +1,10 @@
 # render.yaml
 services:
   - type: web
-    name: crypto-secure-backend
-    env: python
+    name: cryptosecure-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     plan: free
     buildCommand: pip install -r backend/requirements.txt
     startCommand: bash backend/start.sh
