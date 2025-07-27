@@ -14,7 +14,7 @@ const LogTable: React.FC = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/logs?limit=20');
+        const response = await axios.get('https://backend-wandering-bird-8180.fly.dev');
         setLogs(response.data);
       } catch (error) {
         console.error('Error fetching logs:', error);

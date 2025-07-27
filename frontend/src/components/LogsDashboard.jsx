@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 
 function Spinner() {
   return (
@@ -38,7 +40,7 @@ export default function LogsDashboard() {
     setLoading(true);
     setError(null);
 
-    let url = `http://localhost:8000/logs?page=${page}&page_size=${pageSize}&sort_by=timestamp&sort_order=${sortOrder}`;
+    let url = `${API_BASE_URL}/logs?page=${page}&page_size=${pageSize}&sort_by=timestamp&sort_order=${sortOrder}`;
 ;
     if (level !== "All") {
       url += `&level=${level}`;
@@ -64,9 +66,9 @@ export default function LogsDashboard() {
         if (page < totalPages) {
           const nextCacheKey = `${level}_${page + 1}`;
           fetch(
-            `http://localhost:8000/logs?page=${page + 1}&page_size=${pageSize}${
+            `${API_BASE_URL}/logs?page=${page + 1}&page_size=${pageSize}${
               level !== "All" ? `&level=${level}` : ""
-            }`
+            }` // <-- Modified
           )
             .then((res) => res.json())
             .then((nextData) => {
@@ -167,7 +169,7 @@ export default function LogsDashboard() {
           <button
             disabled={loading}
             onClick={() => {
-              window.open("http://localhost:8000/logs/export", "_blank");
+                window.open(`${API_BASE_URL}/logs/export`, "_blank");
             }}
             className="ml-auto bg-coral-600 hover:bg-coral-700 text-white font-semibold px-4 py-2 rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
           >

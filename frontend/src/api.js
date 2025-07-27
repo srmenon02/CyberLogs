@@ -1,5 +1,5 @@
 export async function fetchLogs() {
-  const res = await fetch('http://localhost:8000/logs');
+  const res = await fetch('https://backend-wandering-bird-8180.fly.dev');
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
