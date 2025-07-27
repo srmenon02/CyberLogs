@@ -15,13 +15,16 @@ from pydantic import BaseModel, validator
 import asyncio
 import json
 from fastapi.middleware.gzip import GZipMiddleware
+from dotenv import load_dotenv
+import os
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # Only compress responses >1KB
 
 
 # Configs
-MONGODB_URI = "mongodb://localhost:27017"
+load_dotenv()  # reads from .env file
+MONGODB_URI = os.getenv("MONGO_URI")
 DATABASE_NAME = "cryptosecure"
 COLLECTION_NAME = "logs"
 KAFKA_TOPIC = "test-logs"

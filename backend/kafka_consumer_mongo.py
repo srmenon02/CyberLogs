@@ -3,15 +3,19 @@ import json
 from threading import Thread
 from kafka import KafkaConsumer
 from motor.motor_asyncio import AsyncIOMotorClient
+import os
 from fastapi import FastAPI
 
-MONGODB_URI = "mongodb://localhost:27017"
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("MONGO_URI environment variable is not set")
+
 DATABASE_NAME = "cryptosecure"
 COLLECTION_NAME = "logs"
 KAFKA_TOPIC = "test-logs"
 KAFKA_BOOTSTRAP_SERVERS = "localhost:50849"
 
-client = AsyncIOMotorClient(MONGODB_URI)
+client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
