@@ -13,5 +13,7 @@ tmux*
 *.pyo
 *.coverage
 package-lock.json
-
+backend/.dockerignore
+backend/fly.toml
+backend/mongo_password.txt
 

@@ -1,5 +1,6 @@
 export async function fetchLogs() {
-  const res = await fetch('https://backend-wandering-bird-8180.fly.dev');
+  const apiBaseUrl = import.meta.env.VITE_API_URL;
+  const res = await fetch(`${apiBaseUrl}/logs`); 
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
