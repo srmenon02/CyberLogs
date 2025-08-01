@@ -2,7 +2,7 @@ fastapi==0.95.2
 uvicorn[standard]==0.22.0
 pydantic==1.10.12
 motor==3.1.1
-pymongo==4.3.3
-pandas==2.1.0
+pymongo
+pandas
 numpy==1.26.4
 kafka-python==2.0.2
