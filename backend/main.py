@@ -33,6 +33,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",  # Local development
+        "https://cyberlogs-teal.vercel.app",
         "https://fly.io/apps/backend-wandering-bird-8180/configuration",  # Add your production frontend URL when you deploy it
     ],
     allow_credentials=True,
