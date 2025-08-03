@@ -29,7 +29,7 @@ export default function LogsDashboard() {
   const [sortOrder, setSortOrder] = useState("desc"); // default newest first
 
   const fetchLogs = (page, level = "All") => {
-    const cacheKey = `${level}_${page}_${searchKeyword.trim()}`;
+    const cacheKey = `${level}_${page}_${searchKeyword.trim()}_${sortOrder}`;
     if (cache[cacheKey]) {
       setLogs(cache[cacheKey].logs);
       setTotalCount(cache[cacheKey].totalCount);
@@ -64,7 +64,7 @@ export default function LogsDashboard() {
         // Prefetch next page with same level filter
         const totalPages = Math.ceil(data.total_count / pageSize);
         if (page < totalPages) {
-          const nextCacheKey = `${level}_${page + 1}`;
+          const nextCacheKey = `${level}_${page + 1}_${sortOrder}`;
           fetch(
             `${API_BASE_URL}/logs?page=${page + 1}&page_size=${pageSize}${
               level !== "All" ? `&level=${level}` : ""
@@ -91,7 +91,7 @@ export default function LogsDashboard() {
 
   useEffect(() => {
   fetchLogs(page, levelFilter);
-  }, [page, levelFilter, searchKeyword]);
+  }, [page, levelFilter, searchKeyword, sortOrder]);
 
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -123,9 +123,9 @@ export default function LogsDashboard() {
               className="bg-charcoal-700 text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coral-400"
             >
               <option>All</option>
-              <option>Info</option>
-              <option>Warning</option>
-              <option>Error</option>
+              <option>INFO</option>
+              <option>WARNING</option>
+              <option>ERROR</option>
             </select>
             
             {loading && (
