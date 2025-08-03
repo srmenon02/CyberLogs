@@ -14,7 +14,7 @@
 **Backend:**
 
 - [FastAPI](https://fastapi.tiangolo.com/)
-- [Kafka Consumer)](https://docs.confluent.io/)
+- [Kafka Consumer](https://docs.confluent.io/)
 - [MongoDB](https://motor.readthedocs.io/)
 
 **Deployment:**
