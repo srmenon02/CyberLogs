@@ -20,7 +20,8 @@
 **Deployment:**
 
 - [Docker](https://www.docker.com/)
-
+- [Vercel](https://vercel.com/home)
+- [Fy.io](https://fly.io) 
 <!-- GETTING STARTED -->
 ## Getting Started
 
